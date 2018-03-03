@@ -4,23 +4,28 @@ import tempfile
 import subprocess
 import glob
 import os
-from cd_info import get_cd_info
-from pprint import pprint as pp
+import Cddb
+
+
+def get_cd_info():
+    disc_id = subprocess.run(['cd-discid'], stdout=subprocess.PIPE).stdout
+
+    cddb = Cddb.CddbServer()
+    discs = cddb.getDiscs(disc_id)
+
+    if discs:
+        return cddb.getDiscInfo(discs[0])
+
 
 info = get_cd_info()
 
-pp(info)
-
 with tempfile.TemporaryDirectory() as tmp_dir:
-    '''
     subprocess.run([
         'cdda2wav',
         '--alltracks',
         '--no-infofile',
         os.path.join(tmp_dir, 'audio')
     ])
-    '''
-    subprocess.run(['cdda2wav', os.path.join(tmp_dir, 'audio')])
 
     for i, file in enumerate(glob.iglob(os.path.join(tmp_dir, '*.wav'))):
         subprocess.run([
