@@ -5,6 +5,7 @@ import subprocess
 import glob
 import os
 import Cddb
+import argparse
 
 
 def get_cd_info():
@@ -17,6 +18,19 @@ def get_cd_info():
         return cddb.getDiscInfo(discs[0])
 
 
+parser = argparse.ArgumentParser(description='Ripping a CD with a blunt instrument.')
+parser.add_argument(
+    '-p',
+    '--picture',
+    help='Picture file for cover art'
+)
+
+args = parser.parse_args()
+picture_param = ''
+
+if args.picture:
+    picture_param = f'--picture={args.picture}'
+
 info = get_cd_info()
 
 with tempfile.TemporaryDirectory() as tmp_dir:
@@ -27,7 +41,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
         os.path.join(tmp_dir, 'audio')
     ])
 
-    for i, file in enumerate(glob.iglob(os.path.join(tmp_dir, '*.wav'))):
+    for i, file in enumerate(sorted(glob.iglob(os.path.join(tmp_dir, '*.wav')))):
         subprocess.run([
             'flac',
             '--best',
@@ -38,7 +52,7 @@ with tempfile.TemporaryDirectory() as tmp_dir:
             '--tag', f'COMPOSER={info.artist}',
             '--tag', f'ALBUM={info.title}',
             '--tag', f'GENRE={info.genre}',
-            f'--picture=art.png',
+            picture_param,
             '--output-name', f'{i+1:02}_{info.tracks[i]}.flac',
             os.path.join(tmp_dir, file)
         ])
